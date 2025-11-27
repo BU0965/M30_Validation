@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Systematic Monitoring Of Daily Meter Reading Activities.</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .date-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .date-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .date-input-container label {
+            font-size: 14px;
+        }
+        
+        .date-input {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            width: 120px;
+            text-align: center;
+        }
+        
+        .date-format-hint {
+            font-size: 12px;
+            color: #bdc3c7;
+            margin-top: 3px;
+        }
+        
+        .load-data-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .load-data-btn:hover {
+            background-color: #219653;
+        }
+        
+        .load-data-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .status-message {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-loading {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            padding: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        thead th {
+            background-color: #34495e;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tbody tr:hover {
+            background-color: #e8f4fd;
+        }
+        
+        .tag-column {
+            text-align: left;
+            font-weight: 600;
+            background-color: #ecf0f1;
+        }
+        
+        .reports-column {
+            text-align: left;
+            padding-left: 20px;
+        }
+        
+        .percentage-row {
+            background-color: #e8f5e9;
+            font-weight: 600;
+        }
+        
+        .faulty-section {
+            background-color: #ffebee;
+        }
+        
+        .lock-section {
+            background-color: #fff3e0;
+        }
+        
+        .inaccessible-section {
+            background-color: #f3e5f5;
+        }
+        
+        .validation-section {
+            background-color: #e8eaf6;
+        }
+        
+        .generate-report {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .generate-report:hover {
+            background-color: #1565c0;
+        }
+        
+        .highlight {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .section-header {
+            background-color: #455a64;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .total-column {
+            background-color: #e3f2fd;
+            font-weight: 600;
+        }
+
+        /* नवीन टॅग रंग स्टाइल्स */
+        .faulty-tag {
+            color: #ff5722; /* केशरी */
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .lock-tag {
+            color: #2196f3; /* निळा */
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .inaccessible-tag {
+            color: #9c27b0; /* जांभळा */
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .validation-tag {
+            color: #4caf50; /* हिरवा */
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+            
+            .generate-report {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+
+            .basic-tag,
+            .faulty-tag,
+            .lock-tag,
+            .inaccessible-tag,
+            .validation-tag {
+                font-size: 14px;
+            }
+            
+            .date-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .date-input-container {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Systematic Monitoring Of Daily Meter Reading Activities.</h1>
+            <div class="date-selector">
+                <div class="date-input-container">
+                    <label for="date-input">तारीख:</label>
+                    <input type="text" id="date-input" class="date-input" placeholder="DDMMYYYY" maxlength="8">
+                    <button id="load-data-btn" class="load-data-btn" disabled>डेटा डाउनलोड करा</button>
+                    <div class="date-format-hint">फॉरमॅट: DDMMYYYY</div>
+                </div>
+            </div>
+            <div id="status-message" class="status-message"></div>
+        </header>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tag</th>
+                        <th>Reports</th>
+                        <th>Anewadi PC1</th>
+                        <th>Karhar PC2</th>
+                        <th>Medha PC5</th>
+                        <th>Tapola PC6</th>
+                        <th>Kudal PC8</th>
+                        <th>TOTAL</th>
+                        <th>Generate Report</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Billing Efficiency Row -->
+                    <tr class="percentage-row">
+                        <td class="tag-column"></td>
+                        <td class="reports-column"><strong>Total Consumers Count (Previous Month)</strong></td>
+                        <td id="pc1-consumer-count">-</td>
+                        <td id="pc2-consumer-count">-</td>
+                        <td id="pc5-consumer-count">-</td>
+                        <td id="pc6-consumer-count">-</td>
+                        <td id="pc8-consumer-count">-</td>
+                        <td id="total-consumer-count" class="total-column">-</td>
+                        <td><button class="generate-report">Download PDF</button></td>
+                    </tr>
+					
+					<!-- BASIC Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="basic-tag">PRIMARY</span>
+                        </td>
+                    </tr>
+                    <tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Up-to-date readings received</td>
+                        <td id=0</td>
+                        <td id=0</td>
+                        <td id=0</td>
+                        <td id=0</td>
+                        <td id=0</td>
+                        <td id="total-basic" class="total-column">-</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Billing Efficiency (%)</td>
+                        <td>1</td>
+                        <td>13</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">14</td>
+                        <td><button class="generate-report">Download ALL</button></td>
+                    </tr>
+                    <tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with NORMAL Meter Status</td>
+                        <td>1</td>
+                        <td>13</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">14</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with FAULTY Meter Status</td>
+                        <td id="pc1-faulty">-</td>
+                        <td id="pc2-faulty">-</td>
+                        <td id="pc5-faulty">-</td>
+                        <td id="pc6-faulty">-</td>
+                        <td id="pc8-faulty">-</td>
+                        <td id="total-faulty" class="total-column">-</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with LOCK Meter Status</td>
+                        <td id="pc1-lock">-</td>
+                        <td id="pc2-lock">-</td>
+                        <td id="pc5-lock">-</td>
+                        <td id="pc6-lock">-</td>
+                        <td id="pc8-lock">-</td>
+                        <td id="total-lock" class="total-column">-</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with OVERFLOW Meter Status</td>
+                        <td id="pc1-inacs">-</td>
+                        <td id="pc2-inacs">-</td>
+                        <td id="pc5-inacs">-</td>
+                        <td id="pc6-inacs">-</td>
+                        <td id="pc8-inacs">-</td>
+                        <td id="total-inacs" class="total-column">-</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with Meter Change Status</td>
+                        <td id="pc1-meter-change">-</td>
+                        <td id="pc2-meter-change">-</td>
+                        <td id="pc5-meter-change">-</td>
+                        <td id="pc6-meter-change">-</td>
+                        <td id="pc8-meter-change">-</td>
+                        <td id="total-meter-change" class="total-column">-</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with INACS Meter Status</td>
+                        <td id="pc1-inacs">-</td>
+                        <td id="pc2-inacs">-</td>
+                        <td id="pc5-inacs">-</td>
+                        <td id="pc6-inacs">-</td>
+                        <td id="pc8-inacs">-</td>
+                        <td id="total-inacs" class="total-column">-</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>                    
+                    <!-- FAULTY Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="faulty-tag">FAULTY (Data in Depth)</span>
+                        </td>
+                    </tr>
+                    <tr class="faulty-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">FAULTY meter status in current month</td>
+                        <td>1</td>
+                        <td>13</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">14</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="faulty-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Repeatedly FAULTY meter status</td>
+                        <td>1</td>
+                        <td>32</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">33</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="faulty-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">FAULTY average 1 to 30 unit</td>
+                        <td>1</td>
+                        <td>23</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">24</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="faulty-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">FAULTY average below 5 unit</td>
+                        <td>0</td>
+                        <td>13</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">13</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    Download XLS
+                    <!-- LOCK Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="lock-tag">LOCK (Data in Depth)</span>
+                        </td>
+                    </tr>
+                    <tr class="lock-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">LOCK meter status in current month</td>
+                        <td>20</td>
+                        <td>86</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">106</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="lock-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Repeatedly LOCK meter status</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">0</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="lock-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">LOCK average below 5 unit</td>
+                        <td>9</td>
+                        <td>33</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">42</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    
+                    <!-- INACCESSIBLE Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="inaccessible-tag">INACCESSIBLE (Data in Depth)</span>
+                        </td>
+                    </tr>
+                    <tr class="inaccessible-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">INACS meter status in current month</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">0</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="inaccessible-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Repeatedly INACS meter status</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">0</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="inaccessible-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">INACS average below 5 unit</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">0</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    
+                    <!-- VALIDATION REPORTS Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="validation-tag">VALIDATION REPORTS (Data in Depth)</span>
+                        </td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Smart meters with automatic readings</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">0</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with SOLAR flags</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">0</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers With Reverce Meter Reading</td>
+                        <td>3</td>
+                        <td>8</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">11</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">NRML status and zero consumption</td>
+                        <td>65</td>
+                        <td>445</td>
+                        <td>5</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">515</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">NRML status and consumption between 1 to 5 units</td>
+                        <td>67</td>
+                        <td>386</td>
+                        <td>3</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">456</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">NRML status and consumption between 1 to 30 units</td>
+                        <td>240</td>
+                        <td>1637</td>
+                        <td>11</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">1888</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Top 25 Consumers With Heavy Consumption</td>
+                        <td>25</td>
+                        <td>25</td>
+                        <td>25</td>
+                        <td>25</td>
+                        <td>25</td>
+                        <td class="total-column">125</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column"> Consumers With MF Greater Than 01</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">0</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers Without Mobile Number Registration</td>
+                        <td>192</td>
+                        <td>576</td>
+                        <td>17</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">785</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Faulty to Normal Meter Status Converted</td>
+                        <td>0</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">1</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">TD Meters with Progressive Reading</td>
+                        <td>1</td>
+                        <td>2</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">3</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">TD consumers who have not been PD or Reconnect</td>
+                        <td>2</td>
+                        <td>7</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">9</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">New Consumer ( First Billing )</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td class="total-column">0</td>
+                        <td><button class="generate-report">Download XLS</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SheetJS Library for Excel file processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        // Add functionality to the report generation buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const reportButtons = document.querySelectorAll('.generate-report');
+            
+            reportButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const reportName = row.querySelector('.reports-column').textContent;
+                    
+                    alert(`"${reportName}" अहवाल तयार करण्यासाठी प्रक्रिया सुरू केली आहे.`);
+                    
+                    // In a real application, you would make an API call here
+                    // to generate the actual report
+                });
+            });
+            
+            // Highlight the first row (Billing Efficiency) differently
+            const firstRow = document.querySelector('.percentage-row');
+            if (firstRow) {
+                firstRow.style.backgroundColor = '#e1f5fe';
+                firstRow.style.fontWeight = 'bold';
+            }
+            
+            // Initialize date selector
+            initializeDateSelector();
+        });
+        
+        // Date selector functionality
+        function initializeDateSelector() {
+            const dateInput = document.getElementById('date-input');
+            const loadDataBtn = document.getElementById('load-data-btn');
+            const statusMessage = document.getElementById('status-message');
+            
+            // Auto-format date input
+            dateInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                
+                // Format as DDMMYYYY
+                if (value.length > 2) {
+                    value = value.substring(0, 2) + value.substring(2);
+                }
+                if (value.length > 4) {
+                    value = value.substring(0, 4) + value.substring(4);
+                }
+                
+                e.target.value = value;
+                updateLoadButton();
+            });
+            
+            // Enable/disable load button based on input
+            function updateLoadButton() {
+                if (dateInput.value.length === 8) {
+                    loadDataBtn.disabled = false;
+                } else {
+                    loadDataBtn.disabled = true;
+                }
+            }
+            
+            // Load data from GitHub
+            loadDataBtn.addEventListener('click', async function() {
+                const dateValue = dateInput.value;
+                
+                if (dateValue.length !== 8) {
+                    showStatus('कृपया DDMMYYYY फॉरमॅटमध्ये तारीख प्रविष्ट करा.', 'error');
+                    return;
+                }
+                
+                // Validate date
+                const day = parseInt(dateValue.substring(0, 2));
+                const month = parseInt(dateValue.substring(2, 4));
+                const year = parseInt(dateValue.substring(4, 8));
+                
+                if (!isValidDate(day, month, year)) {
+                    showStatus('कृपया वैध तारीख प्रविष्ट करा.', 'error');
+                    return;
+                }
+                
+                showStatus('डेटा लोड करत आहे...', 'loading');
+                
+                try {
+                    // Load consumer count data first
+                    await loadConsumerCountData();
+                    
+                    // Load M30 data
+                    const fileName = `M30_${dateValue}.xlsx`;
+                    const fileUrl = `https://bu0965.github.io/M30_Validation/${fileName}`;
+                    
+                    // Fetch the Excel file
+                    const response = await fetch(fileUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`फाईल सापडली नाही: ${fileName}`);
+                    }
+                    
+                    // Convert response to array buffer
+                    const arrayBuffer = await response.arrayBuffer();
+                    
+                    // Parse Excel file using SheetJS
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    
+                    // Process the Excel data
+                    processExcelData(workbook);
+                    
+                    showStatus(`M30_${dateValue}.xlsx फाईलमधून डेटा यशस्वीरित्या लोड केला.`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    showStatus(`त्रुटी: ${error.message}`, 'error');
+                }
+            });
+            
+            // Load consumer count data
+            async function loadConsumerCountData() {
+                try {
+                    const consumerCountUrl = 'https://bu0965.github.io/M30_Validation/PC_Wise_Cons_Count.xlsx';
+                    const response = await fetch(consumerCountUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error('PC_Wise_Cons_Count.xlsx फाईल सापडली नाही');
+                    }
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    // Get values from specific cells
+                    const pc1Count = worksheet['B2'] ? worksheet['B2'].v : 0;
+                    const pc2Count = worksheet['B3'] ? worksheet['B3'].v : 0;
+                    const pc5Count = worksheet['B4'] ? worksheet['B4'].v : 0;
+                    const pc6Count = worksheet['B5'] ? worksheet['B5'].v : 0;
+                    const pc8Count = worksheet['B6'] ? worksheet['B6'].v : 0;
+                    
+                    // Update the table with consumer counts
+                    document.getElementById('pc1-consumer-count').textContent = pc1Count;
+                    document.getElementById('pc2-consumer-count').textContent = pc2Count;
+                    document.getElementById('pc5-consumer-count').textContent = pc5Count;
+                    document.getElementById('pc6-consumer-count').textContent = pc6Count;
+                    document.getElementById('pc8-consumer-count').textContent = pc8Count;
+                    
+                    // Calculate and update total consumer count
+                    const totalConsumerCount = pc1Count + pc2Count + pc5Count + pc6Count + pc8Count;
+                    document.getElementById('total-consumer-count').textContent = totalConsumerCount;
+                    
+                    console.log('Consumer Counts:', {
+                        'PC1': pc1Count,
+                        'PC2': pc2Count,
+                        'PC5': pc5Count,
+                        'PC6': pc6Count,
+                        'PC8': pc8Count,
+                        'Total': totalConsumerCount
+                    });
+                    
+                } catch (error) {
+                    console.error('Error loading consumer count data:', error);
+                    showStatus(`ग्राहक संख्या डेटा लोड करताना त्रुटी: ${error.message}`, 'error');
+                }
+            }
+            
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status-message';
+                
+                if (type === 'success') {
+                    statusMessage.classList.add('status-success');
+                } else if (type === 'error') {
+                    statusMessage.classList.add('status-error');
+                } else if (type === 'loading') {
+                    statusMessage.classList.add('status-loading');
+                }
+            }
+            
+            function isValidDate(day, month, year) {
+                // Basic date validation
+                if (month < 1 || month > 12) return false;
+                if (day < 1 || day > 31) return false;
+                
+                // Check for months with 30 days
+                if ([4, 6, 9, 11].includes(month) && day > 30) return false;
+                
+                // Check for February
+                if (month === 2) {
+                    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+                    if (isLeapYear && day > 29) return false;
+                    if (!isLeapYear && day > 28) return false;
+                }
+                
+                return true;
+            }
+            
+            function processExcelData(workbook) {
+                // Get the first worksheet
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convert worksheet to JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                // Initialize counters for different status types
+                let pc1Count = 0, pc2Count = 0, pc5Count = 0, pc6Count = 0, pc8Count = 0;
+                let pc1ZeroCount = 0, pc2ZeroCount = 0, pc5ZeroCount = 0, pc6ZeroCount = 0, pc8ZeroCount = 0;
+                
+                // Initialize counters for status types (1, 2, 5, 4 in column K)
+                let pc1Faulty = 0, pc2Faulty = 0, pc5Faulty = 0, pc6Faulty = 0, pc8Faulty = 0;
+                let pc1Lock = 0, pc2Lock = 0, pc5Lock = 0, pc6Lock = 0, pc8Lock = 0;
+                let pc1Inacs = 0, pc2Inacs = 0, pc5Inacs = 0, pc6Inacs = 0, pc8Inacs = 0;
+                let pc1MeterChange = 0, pc2MeterChange = 0, pc5MeterChange = 0, pc6MeterChange = 0, pc8MeterChange = 0;
+                
+                // Start from row 1 (skip header if exists)
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row && row.length > 10) {
+                        const pcValue = row[0]; // Column A
+                        const kValue = row[10]; // Column K
+                        
+                        // Check if column K value is zero (for Billing Efficiency)
+                        const isZero = kValue === 0 || kValue === '0' || kValue === '' || kValue === null || kValue === undefined;
+                        
+                        // Check status values in column K
+                        const isFaulty = kValue === 1 || kValue === '1';
+                        const isLock = kValue === 2 || kValue === '2';
+                        const isInacs = kValue === 5 || kValue === '5';
+                        const isMeterChange = kValue === 4 || kValue === '4';
+                        
+                        if (pcValue === 1 || pcValue === '1') {
+                            pc1Count++;
+                            if (isZero) pc1ZeroCount++;
+                            if (isFaulty) pc1Faulty++;
+                            if (isLock) pc1Lock++;
+                            if (isInacs) pc1Inacs++;
+                            if (isMeterChange) pc1MeterChange++;
+                        } else if (pcValue === 2 || pcValue === '2') {
+                            pc2Count++;
+                            if (isZero) pc2ZeroCount++;
+                            if (isFaulty) pc2Faulty++;
+                            if (isLock) pc2Lock++;
+                            if (isInacs) pc2Inacs++;
+                            if (isMeterChange) pc2MeterChange++;
+                        } else if (pcValue === 5 || pcValue === '5') {
+                            pc5Count++;
+                            if (isZero) pc5ZeroCount++;
+                            if (isFaulty) pc5Faulty++;
+                            if (isLock) pc5Lock++;
+                            if (isInacs) pc5Inacs++;
+                            if (isMeterChange) pc5MeterChange++;
+                        } else if (pcValue === 6 || pcValue === '6') {
+                            pc6Count++;
+                            if (isZero) pc6ZeroCount++;
+                            if (isFaulty) pc6Faulty++;
+                            if (isLock) pc6Lock++;
+                            if (isInacs) pc6Inacs++;
+                            if (isMeterChange) pc6MeterChange++;
+                        } else if (pcValue === 8 || pcValue === '8') {
+                            pc8Count++;
+                            if (isZero) pc8ZeroCount++;
+                            if (isFaulty) pc8Faulty++;
+                            if (isLock) pc8Lock++;
+                            if (isInacs) pc8Inacs++;
+                            if (isMeterChange) pc8MeterChange++;
+                        }
+                    }
+                }
+                
+                // Update the Reading Received row with PC counts
+                document.getElementById('pc1-count').textContent = pc1Count;
+                document.getElementById('pc2-count').textContent = pc2Count;
+                document.getElementById('pc5-count').textContent = pc5Count;
+                document.getElementById('pc6-count').textContent = pc6Count;
+                document.getElementById('pc8-count').textContent = pc8Count;
+                
+                // Calculate and update total
+                const totalCount = pc1Count + pc2Count + pc5Count + pc6Count + pc8Count;
+                document.getElementById('total-count').textContent = totalCount;
+                
+                // Calculate Billing Efficiency percentages
+                const pc1Efficiency = pc1Count > 0 ? ((pc1Count - pc1ZeroCount) / pc1Count * 100).toFixed(2) : '0.00';
+                const pc2Efficiency = pc2Count > 0 ? ((pc2Count - pc2ZeroCount) / pc2Count * 100).toFixed(2) : '0.00';
+                const pc5Efficiency = pc5Count > 0 ? ((pc5Count - pc5ZeroCount) / pc5Count * 100).toFixed(2) : '0.00';
+                const pc6Efficiency = pc6Count > 0 ? ((pc6Count - pc6ZeroCount) / pc6Count * 100).toFixed(2) : '0.00';
+                const pc8Efficiency = pc8Count > 0 ? ((pc8Count - pc8ZeroCount) / pc8Count * 100).toFixed(2) : '0.00';
+                
+                // Update Billing Efficiency row
+                document.getElementById('pc1-efficiency').textContent = pc1Efficiency;
+                document.getElementById('pc2-efficiency').textContent = pc2Efficiency;
+                document.getElementById('pc5-efficiency').textContent = pc5Efficiency;
+                document.getElementById('pc6-efficiency').textContent = pc6Efficiency;
+                document.getElementById('pc8-efficiency').textContent = pc8Efficiency;
+                
+                // Calculate and update total efficiency
+                const totalZeroCount = pc1ZeroCount + pc2ZeroCount + pc5ZeroCount + pc6ZeroCount + pc8ZeroCount;
+                const totalEfficiency = totalCount > 0 ? ((totalCount - totalZeroCount) / totalCount * 100).toFixed(2) : '0.00';
+                document.getElementById('total-efficiency').textContent = totalEfficiency;
+                
+                // Update FAULTY status counts
+                document.getElementById('pc1-faulty').textContent = pc1Faulty;
+                document.getElementById('pc2-faulty').textContent = pc2Faulty;
+                document.getElementById('pc5-faulty').textContent = pc5Faulty;
+                document.getElementById('pc6-faulty').textContent = pc6Faulty;
+                document.getElementById('pc8-faulty').textContent = pc8Faulty;
+                const totalFaulty = pc1Faulty + pc2Faulty + pc5Faulty + pc6Faulty + pc8Faulty;
+                document.getElementById('total-faulty').textContent = totalFaulty;
+                
+                // Update LOCK status counts
+                document.getElementById('pc1-lock').textContent = pc1Lock;
+                document.getElementById('pc2-lock').textContent = pc2Lock;
+                document.getElementById('pc5-lock').textContent = pc5Lock;
+                document.getElementById('pc6-lock').textContent = pc6Lock;
+                document.getElementById('pc8-lock').textContent = pc8Lock;
+                const totalLock = pc1Lock + pc2Lock + pc5Lock + pc6Lock + pc8Lock;
+                document.getElementById('total-lock').textContent = totalLock;
+                
+                // Update INACS status counts
+                document.getElementById('pc1-inacs').textContent = pc1Inacs;
+                document.getElementById('pc2-inacs').textContent = pc2Inacs;
+                document.getElementById('pc5-inacs').textContent = pc5Inacs;
+                document.getElementById('pc6-inacs').textContent = pc6Inacs;
+                document.getElementById('pc8-inacs').textContent = pc8Inacs;
+                const totalInacs = pc1Inacs + pc2Inacs + pc5Inacs + pc6Inacs + pc8Inacs;
+                document.getElementById('total-inacs').textContent = totalInacs;
+                
+                // Update Meter Change status counts
+                document.getElementById('pc1-meter-change').textContent = pc1MeterChange;
+                document.getElementById('pc2-meter-change').textContent = pc2MeterChange;
+                document.getElementById('pc5-meter-change').textContent = pc5MeterChange;
+                document.getElementById('pc6-meter-change').textContent = pc6MeterChange;
+                document.getElementById('pc8-meter-change').textContent = pc8MeterChange;
+                const totalMeterChange = pc1MeterChange + pc2MeterChange + pc5MeterChange + pc6MeterChange + pc8MeterChange;
+                document.getElementById('total-meter-change').textContent = totalMeterChange;
+                
+                console.log('Status Counts:', {
+                    'FAULTY (K=1)': { PC1: pc1Faulty, PC2: pc2Faulty, PC5: pc5Faulty, PC6: pc6Faulty, PC8: pc8Faulty, Total: totalFaulty },
+                    'LOCK (K=2)': { PC1: pc1Lock, PC2: pc2Lock, PC5: pc5Lock, PC6: pc6Lock, PC8: pc8Lock, Total: totalLock },
+                    'INACS (K=5)': { PC1: pc1Inacs, PC2: pc2Inacs, PC5: pc5Inacs, PC6: pc6Inacs, PC8: pc8Inacs, Total: totalInacs },
+                    'Meter Change (K=4)': { PC1: pc1MeterChange, PC2: pc2MeterChange, PC5: pc5MeterChange, PC6: pc6MeterChange, PC8: pc8MeterChange, Total: totalMeterChange }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
