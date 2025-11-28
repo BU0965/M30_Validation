@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Systematic Monitoring Of Daily Meter Reading Activities.</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .date-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .date-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .date-input-container label {
+            font-size: 14px;
+        }
+        
+        .date-input {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            width: 120px;
+            text-align: center;
+        }
+        
+        .date-format-hint {
+            font-size: 12px;
+            color: #bdc3c7;
+            margin-top: 3px;
+        }
+        
+        .load-data-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .load-data-btn:hover {
+            background-color: #219653;
+        }
+        
+        .load-data-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .status-message {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-loading {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            padding: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        thead th {
+            background-color: #34495e;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tbody tr:hover {
+            background-color: #e8f4fd;
+        }
+        
+        .tag-column {
+            text-align: left;
+            font-weight: 600;
+            background-color: #ecf0f1;
+        }
+        
+        .reports-column {
+            text-align: left;
+            padding-left: 20px;
+        }
+        
+        .percentage-row {
+            background-color: #e8f5e9;
+            font-weight: 600;
+        }
+        
+        .faulty-section {
+            background-color: #ffebee;
+        }
+        
+        .lock-section {
+            background-color: #fff3e0;
+        }
+        
+        .inaccessible-section {
+            background-color: #f3e5f5;
+        }
+        
+        .validation-section {
+            background-color: #e8eaf6;
+        }
+        
+        .generate-report {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .generate-report:hover {
+            background-color: #1565c0;
+        }
+        
+        .highlight {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .section-header {
+            background-color: #455a64;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .total-column {
+            background-color: #e3f2fd;
+            font-weight: 600;
+        }
+
+        /* नवीन टॅग रंग स्टाइल्स */
+        .faulty-tag {
+            color: #ff5722; /* केशरी */
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .lock-tag {
+            color: #2196f3; /* निळा */
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .inaccessible-tag {
+            color: #9c27b0; /* जांभळा */
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .validation-tag {
+            color: #4caf50; /* हिरवा */
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+            
+            .generate-report {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+
+            .basic-tag,
+            .faulty-tag,
+            .lock-tag,
+            .inaccessible-tag,
+            .validation-tag {
+                font-size: 14px;
+            }
+            
+            .date-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .date-input-container {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Systematic Monitoring Of Daily Meter Reading Activities.</h1>
+            <div class="date-selector">
+                <div class="date-input-container">
+                    <label for="date-input">तारीख:</label>
+                    <input type="text" id="date-input" class="date-input" placeholder="DDMMYYYY" maxlength="8">
+                    <button id="load-data-btn" class="load-data-btn" disabled>डेटा डाउनलोड करा</button>
+                    <div class="date-format-hint">फॉरमॅट: DDMMYYYY</div>
+                </div>
+            </div>
+            <div id="status-message" class="status-message"></div>
+        </header>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tag</th>
+                        <th>Reports</th>
+                        <th>Anewadi PC1</th>
+                        <th>Karhar PC2</th>
+                        <th>Medha PC5</th>
+                        <th>Tapola PC6</th>
+                        <th>Kudal PC8</th>
+                        <th>TOTAL</th>
+                        <th>Generate Report</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Billing Efficiency Row -->
+                    <tr class="percentage-row">
+                        <td class="tag-column"></td>
+                        <td class="reports-column"><strong>Total Consumers Count (Previous Month)</strong></td>
+                        <td id="pc1-consumer-count">-</td>
+                        <td id="pc2-consumer-count">-</td>
+                        <td id="pc5-consumer-count">-</td>
+                        <td id="pc6-consumer-count">-</td>
+                        <td id="pc8-consumer-count">-</td>
+                        <td id="total-consumer-count" class="total-column">-</td>
+                        <td><button class="generate-report" id="download-pdf-btn">Download PDF</button></td>
+                    </tr>
+					
+					<!-- BASIC Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="basic-tag">PRIMARY</span>
+                        </td>
+                    </tr>
+                    <tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Up-to-date readings received</td>
+                        <td id="pc1-count">-</td>
+                        <td id="pc2-count">-</td>
+                        <td id="pc5-count">-</td>
+                        <td id="pc6-count">-</td>
+                        <td id="pc8-count">-</td>
+                        <td id="total-count" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="basic" data-report-name="Up-to-date readings received">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Billing Efficiency (%)</td>
+                        <td id="pc1-efficiency">-</td>
+                        <td id="pc2-efficiency">-</td>
+                        <td id="pc5-efficiency">-</td>
+                        <td id="pc6-efficiency">-</td>
+                        <td id="pc8-efficiency">-</td>
+                        <td id="total-efficiency" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="basic" data-report-name="Billing Efficiency">Download XLS</button></td>
+                    </tr>
+                    <tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with NORMAL Meter Status</td>
+                        <td id="pc1-normal">-</td>
+                        <td id="pc2-normal">-</td>
+                        <td id="pc5-normal">-</td>
+                        <td id="pc6-normal">-</td>
+                        <td id="pc8-normal">-</td>
+                        <td id="total-normal" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="basic" data-report-name="Consumers with NORMAL Meter Status">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with FAULTY Meter Status</td>
+                        <td id="pc1-faulty">-</td>
+                        <td id="pc2-faulty">-</td>
+                        <td id="pc5-faulty">-</td>
+                        <td id="pc6-faulty">-</td>
+                        <td id="pc8-faulty">-</td>
+                        <td id="total-faulty" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="basic" data-report-name="Consumers with FAULTY Meter Status">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with LOCK Meter Status</td>
+                        <td id="pc1-lock">-</td>
+                        <td id="pc2-lock">-</td>
+                        <td id="pc5-lock">-</td>
+                        <td id="pc6-lock">-</td>
+                        <td id="pc8-lock">-</td>
+                        <td id="total-lock" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="basic" data-report-name="Consumers with LOCK Meter Status">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with OVERFLOW Meter Status</td>
+                        <td id="pc1-overflow">-</td>
+                        <td id="pc2-overflow">-</td>
+                        <td id="pc5-overflow">-</td>
+                        <td id="pc6-overflow">-</td>
+                        <td id="pc8-overflow">-</td>
+                        <td id="total-overflow" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="basic" data-report-name="Consumers with OVERFLOW Meter Status">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with Meter Change Status</td>
+                        <td id="pc1-meter-change">-</td>
+                        <td id="pc2-meter-change">-</td>
+                        <td id="pc5-meter-change">-</td>
+                        <td id="pc6-meter-change">-</td>
+                        <td id="pc8-meter-change">-</td>
+                        <td id="total-meter-change" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="basic" data-report-name="Consumers with Meter Change Status">Download XLS</button></td>
+                    </tr>
+					<tr class="basic-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with INACS Meter Status</td>
+                        <td id="pc1-inacs">-</td>
+                        <td id="pc2-inacs">-</td>
+                        <td id="pc5-inacs">-</td>
+                        <td id="pc6-inacs">-</td>
+                        <td id="pc8-inacs">-</td>
+                        <td id="total-inacs" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="basic" data-report-name="Consumers with INACS Meter Status">Download XLS</button></td>
+                    </tr>                    
+                    <!-- FAULTY Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="faulty-tag">FAULTY (Data in Depth)</span>
+                        </td>
+                    </tr>
+                    <tr class="faulty-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">FAULTY meter status in current month</td>
+                        <td id="pc1-faulty-current">-</td>
+                        <td id="pc2-faulty-current">-</td>
+                        <td id="pc5-faulty-current">-</td>
+                        <td id="pc6-faulty-current">-</td>
+                        <td id="pc8-faulty-current">-</td>
+                        <td id="total-faulty-current" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="faulty" data-report-name="FAULTY meter status in current month">Download XLS</button></td>
+                    </tr>
+                    <tr class="faulty-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Repeatedly FAULTY meter status</td>
+                        <td id="pc1-faulty-repeated">-</td>
+                        <td id="pc2-faulty-repeated">-</td>
+                        <td id="pc5-faulty-repeated">-</td>
+                        <td id="pc6-faulty-repeated">-</td>
+                        <td id="pc8-faulty-repeated">-</td>
+                        <td id="total-faulty-repeated" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="faulty" data-report-name="Repeatedly FAULTY meter status">Download XLS</button></td>
+                    </tr>
+                    <tr class="faulty-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">FAULTY average 1 to 30 unit</td>
+                        <td id="pc1-faulty-1-30">-</td>
+                        <td id="pc2-faulty-1-30">-</td>
+                        <td id="pc5-faulty-1-30">-</td>
+                        <td id="pc6-faulty-1-30">-</td>
+                        <td id="pc8-faulty-1-30">-</td>
+                        <td id="total-faulty-1-30" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="faulty" data-report-name="FAULTY average 1 to 30 unit">Download XLS</button></td>
+                    </tr>
+                    <tr class="faulty-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">FAULTY average below 5 unit</td>
+                        <td id="pc1-faulty-below5">-</td>
+                        <td id="pc2-faulty-below5">-</td>
+                        <td id="pc5-faulty-below5">-</td>
+                        <td id="pc6-faulty-below5">-</td>
+                        <td id="pc8-faulty-below5">-</td>
+                        <td id="total-faulty-below5" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="faulty" data-report-name="FAULTY average below 5 unit">Download XLS</button></td>
+                    </tr>
+                    
+                    <!-- LOCK Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="lock-tag">LOCK (Data in Depth)</span>
+                        </td>
+                    </tr>
+                    <tr class="lock-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">LOCK meter status in current month</td>
+                        <td id="pc1-lock-current">-</td>
+                        <td id="pc2-lock-current">-</td>
+                        <td id="pc5-lock-current">-</td>
+                        <td id="pc6-lock-current">-</td>
+                        <td id="pc8-lock-current">-</td>
+                        <td id="total-lock-current" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="lock" data-report-name="LOCK meter status in current month">Download XLS</button></td>
+                    </tr>
+                    <tr class="lock-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Repeatedly LOCK meter status</td>
+                        <td id="pc1-lock-repeated">-</td>
+                        <td id="pc2-lock-repeated">-</td>
+                        <td id="pc5-lock-repeated">-</td>
+                        <td id="pc6-lock-repeated">-</td>
+                        <td id="pc8-lock-repeated">-</td>
+                        <td id="total-lock-repeated" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="lock" data-report-name="Repeatedly LOCK meter status">Download XLS</button></td>
+                    </tr>
+                    <tr class="lock-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">LOCK average below 5 unit</td>
+                        <td id="pc1-lock-below5">-</td>
+                        <td id="pc2-lock-below5">-</td>
+                        <td id="pc5-lock-below5">-</td>
+                        <td id="pc6-lock-below5">-</td>
+                        <td id="pc8-lock-below5">-</td>
+                        <td id="total-lock-below5" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="lock" data-report-name="LOCK average below 5 unit">Download XLS</button></td>
+                    </tr>
+                    
+                    <!-- INACCESSIBLE Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="inaccessible-tag">INACCESSIBLE (Data in Depth)</span>
+                        </td>
+                    </tr>
+                    <tr class="inaccessible-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">INACS meter status in current month</td>
+                        <td id="pc1-inacs-current">-</td>
+                        <td id="pc2-inacs-current">-</td>
+                        <td id="pc5-inacs-current">-</td>
+                        <td id="pc6-inacs-current">-</td>
+                        <td id="pc8-inacs-current">-</td>
+                        <td id="total-inacs-current" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="inaccessible" data-report-name="INACS meter status in current month">Download XLS</button></td>
+                    </tr>
+                    <tr class="inaccessible-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Repeatedly INACS meter status</td>
+                        <td id="pc1-inacs-repeated">-</td>
+                        <td id="pc2-inacs-repeated">-</td>
+                        <td id="pc5-inacs-repeated">-</td>
+                        <td id="pc6-inacs-repeated">-</td>
+                        <td id="pc8-inacs-repeated">-</td>
+                        <td id="total-inacs-repeated" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="inaccessible" data-report-name="Repeatedly INACS meter status">Download XLS</button></td>
+                    </tr>
+                    <tr class="inaccessible-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">INACS average below 5 unit</td>
+                        <td id="pc1-inacs-below5">-</td>
+                        <td id="pc2-inacs-below5">-</td>
+                        <td id="pc5-inacs-below5">-</td>
+                        <td id="pc6-inacs-below5">-</td>
+                        <td id="pc8-inacs-below5">-</td>
+                        <td id="total-inacs-below5" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="inaccessible" data-report-name="INACS average below 5 unit">Download XLS</button></td>
+                    </tr>
+                    
+                    <!-- VALIDATION REPORTS Section -->
+                    <tr class="section-header">
+                        <td class="tag-column" colspan="9">
+                            <span class="validation-tag">VALIDATION REPORTS (Data in Depth)</span>
+                        </td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Smart meters with automatic readings</td>
+                        <td id="pc1-sm01">-</td>
+                        <td id="pc2-sm01">-</td>
+                        <td id="pc5-sm01">-</td>
+                        <td id="pc6-sm01">-</td>
+                        <td id="pc8-sm01">-</td>
+                        <td id="total-sm01" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="Smart meters with automatic readings">Download XLS</button></td>
+                    </tr>
+					<tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Smart Meter Readings through Mobile App</td>
+                        <td id="pc1-mobile">-</td>
+                        <td id="pc2-mobile">-</td>
+                        <td id="pc5-mobile">-</td>
+                        <td id="pc6-mobile">-</td>
+                        <td id="pc8-mobile">-</td>
+                        <td id="total-mobile" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="Smart Meter Readings through Mobile App">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers with SOLAR flags</td>
+                        <td id="pc1-solar">-</td>
+                        <td id="pc2-solar">-</td>
+                        <td id="pc5-solar">-</td>
+                        <td id="pc6-solar">-</td>
+                        <td id="pc8-solar">-</td>
+                        <td id="total-solar" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="Consumers with SOLAR flags">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers With Reverce Meter Reading</td>
+                        <td id="pc1-reverse">-</td>
+                        <td id="pc2-reverse">-</td>
+                        <td id="pc5-reverse">-</td>
+                        <td id="pc6-reverse">-</td>
+                        <td id="pc8-reverse">-</td>
+                        <td id="total-reverse" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="Consumers With Reverce Meter Reading">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">NRML status and zero consumption</td>
+                        <td id="pc1-nrml-zero">-</td>
+                        <td id="pc2-nrml-zero">-</td>
+                        <td id="pc5-nrml-zero">-</td>
+                        <td id="pc6-nrml-zero">-</td>
+                        <td id="pc8-nrml-zero">-</td>
+                        <td id="total-nrml-zero" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="NRML status and zero consumption">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">NRML status and consumption between 1 to 5 units</td>
+                        <td id="pc1-nrml-1-5">-</td>
+                        <td id="pc2-nrml-1-5">-</td>
+                        <td id="pc5-nrml-1-5">-</td>
+                        <td id="pc6-nrml-1-5">-</td>
+                        <td id="pc8-nrml-1-5">-</td>
+                        <td id="total-nrml-1-5" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="NRML status and consumption between 1 to 5 units">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">NRML status and consumption between 1 to 30 units</td>
+                        <td id="pc1-nrml-1-30">-</td>
+                        <td id="pc2-nrml-1-30">-</td>
+                        <td id="pc5-nrml-1-30">-</td>
+                        <td id="pc6-nrml-1-30">-</td>
+                        <td id="pc8-nrml-1-30">-</td>
+                        <td id="total-nrml-1-30" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="NRML status and consumption between 1 to 30 units">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section" style="display:none;">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Top 25 Consumers With Heavy Consumption</td>
+                        <td id="pc1-top25">-</td>
+                        <td id="pc2-top25">-</td>
+                        <td id="pc5-top25">-</td>
+                        <td id="pc6-top25">-</td>
+                        <td id="pc8-top25">-</td>
+                        <td id="total-top25" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="Top 25 Consumers With Heavy Consumption">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column"> Consumers With MF Greater Than 01</td>
+                        <td id="pc1-mf">-</td>
+                        <td id="pc2-mf">-</td>
+                        <td id="pc5-mf">-</td>
+                        <td id="pc6-mf">-</td>
+                        <td id="pc8-mf">-</td>
+                        <td id="total-mf" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="Consumers With MF Greater Than 01">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Consumers Without Mobile Number Registration</td>
+                        <td id="pc1-nomobile">-</td>
+                        <td id="pc2-nomobile">-</td>
+                        <td id="pc5-nomobile">-</td>
+                        <td id="pc6-nomobile">-</td>
+                        <td id="pc8-nomobile">-</td>
+                        <td id="total-nomobile" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="Consumers Without Mobile Number Registration">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">Faulty to Normal Meter Status Converted</td>
+                        <td id="pc1-faulty-normal">-</td>
+                        <td id="pc2-faulty-normal">-</td>
+                        <td id="pc5-faulty-normal">-</td>
+                        <td id="pc6-faulty-normal">-</td>
+                        <td id="pc8-faulty-normal">-</td>
+                        <td id="total-faulty-normal" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="Faulty to Normal Meter Status Converted">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">TD Meters with Progressive Reading</td>
+                        <td id="pc1-td-progressive">-</td>
+                        <td id="pc2-td-progressive">-</td>
+                        <td id="pc5-td-progressive">-</td>
+                        <td id="pc6-td-progressive">-</td>
+                        <td id="pc8-td-progressive">-</td>
+                        <td id="total-td-progressive" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="TD Meters with Progressive Reading">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">TD consumers who have not been PD or Reconnect</td>
+                        <td id="pc1-td-nopd">-</td>
+                        <td id="pc2-td-nopd">-</td>
+                        <td id="pc5-td-nopd">-</td>
+                        <td id="pc6-td-nopd">-</td>
+                        <td id="pc8-td-nopd">-</td>
+                        <td id="total-td-nopd" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="TD consumers who have not been PD or Reconnect">Download XLS</button></td>
+                    </tr>
+                    <tr class="validation-section">
+                        <td class="tag-column"></td>
+                        <td class="reports-column">New Consumer ( First Billing )</td>
+                        <td id="pc1-new-consumer">-</td>
+                        <td id="pc2-new-consumer">-</td>
+                        <td id="pc5-new-consumer">-</td>
+                        <td id="pc6-new-consumer">-</td>
+                        <td id="pc8-new-consumer">-</td>
+                        <td id="total-new-consumer" class="total-column">-</td>
+                        <td><button class="generate-report" data-report-type="validation" data-report-name="New Consumer ( First Billing )">Download XLS</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SheetJS Library for Excel file processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF Library for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        // Global variables to store data
+        let currentWorkbookData = null;
+        let currentDateValue = null;
+        
+        // Add functionality to the report generation buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const reportButtons = document.querySelectorAll('.generate-report');
+            
+            reportButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const reportName = row.querySelector('.reports-column').textContent;
+                    
+                    if (this.id === 'download-pdf-btn') {
+                        generatePDFReport();
+                    } else {
+                        const reportType = this.getAttribute('data-report-type');
+                        const reportName = this.getAttribute('data-report-name');
+                        generateExcelReport(reportType, reportName);
+                    }
+                });
+            });
+            
+            // Highlight the first row (Billing Efficiency) differently
+            const firstRow = document.querySelector('.percentage-row');
+            if (firstRow) {
+                firstRow.style.backgroundColor = '#e1f5fe';
+                firstRow.style.fontWeight = 'bold';
+            }
+            
+            // Initialize date selector
+            initializeDateSelector();
+        });
+        
+        // Date selector functionality
+        function initializeDateSelector() {
+            const dateInput = document.getElementById('date-input');
+            const loadDataBtn = document.getElementById('load-data-btn');
+            const statusMessage = document.getElementById('status-message');
+            
+            // Auto-format date input
+            dateInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                
+                // Format as DDMMYYYY
+                if (value.length > 2) {
+                    value = value.substring(0, 2) + value.substring(2);
+                }
+                if (value.length > 4) {
+                    value = value.substring(0, 4) + value.substring(4);
+                }
+                
+                e.target.value = value;
+                updateLoadButton();
+            });
+            
+            // Enable/disable load button based on input
+            function updateLoadButton() {
+                if (dateInput.value.length === 8) {
+                    loadDataBtn.disabled = false;
+                } else {
+                    loadDataBtn.disabled = true;
+                }
+            }
+            
+            // Load data from GitHub
+            loadDataBtn.addEventListener('click', async function() {
+                const dateValue = dateInput.value;
+                
+                if (dateValue.length !== 8) {
+                    showStatus('कृपया DDMMYYYY फॉरमॅटमध्ये तारीख प्रविष्ट करा.', 'error');
+                    return;
+                }
+                
+                // Validate date
+                const day = parseInt(dateValue.substring(0, 2));
+                const month = parseInt(dateValue.substring(2, 4));
+                const year = parseInt(dateValue.substring(4, 8));
+                
+                if (!isValidDate(day, month, year)) {
+                    showStatus('कृपया वैध तारीख प्रविष्ट करा.', 'error');
+                    return;
+                }
+                
+                showStatus('डेटा लोड करत आहे...', 'loading');
+                
+                try {
+                    // Load consumer count data first
+                    await loadConsumerCountData();
+                    
+                    // Load M30 data
+                    const fileName = `M30_${dateValue}.xlsx`;
+                    const fileUrl = `https://bu0965.github.io/M30_Validation/${fileName}`;
+                    
+                    // Fetch the Excel file
+                    const response = await fetch(fileUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`फाईल सापडली नाही: ${fileName}`);
+                    }
+                    
+                    // Convert response to array buffer
+                    const arrayBuffer = await response.arrayBuffer();
+                    
+                    // Parse Excel file using SheetJS
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    
+                    // Store workbook data globally
+                    currentWorkbookData = workbook;
+                    currentDateValue = dateValue;
+                    
+                    // Process the Excel data
+                    processExcelData(workbook, dateValue);
+                    
+                    showStatus(`M30_${dateValue}.xlsx फाईलमधून डेटा यशस्वीरित्या लोड केला.`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    showStatus(`त्रुटी: ${error.message}`, 'error');
+                }
+            });
+            
+            // Load consumer count data
+            async function loadConsumerCountData() {
+                try {
+                    const consumerCountUrl = 'https://bu0965.github.io/M30_Validation/PC_Wise_Cons_Count.xlsx';
+                    const response = await fetch(consumerCountUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error('PC_Wise_Cons_Count.xlsx फाईल सापडली नाही');
+                    }
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    // Get values from specific cells
+                    const pc1Count = worksheet['B2'] ? worksheet['B2'].v : 0;
+                    const pc2Count = worksheet['B3'] ? worksheet['B3'].v : 0;
+                    const pc5Count = worksheet['B4'] ? worksheet['B4'].v : 0;
+                    const pc6Count = worksheet['B5'] ? worksheet['B5'].v : 0;
+                    const pc8Count = worksheet['B6'] ? worksheet['B6'].v : 0;
+                    
+                    // Update the table with consumer counts
+                    document.getElementById('pc1-consumer-count').textContent = pc1Count;
+                    document.getElementById('pc2-consumer-count').textContent = pc2Count;
+                    document.getElementById('pc5-consumer-count').textContent = pc5Count;
+                    document.getElementById('pc6-consumer-count').textContent = pc6Count;
+                    document.getElementById('pc8-consumer-count').textContent = pc8Count;
+                    
+                    // Calculate and update total consumer count
+                    const totalConsumerCount = pc1Count + pc2Count + pc5Count + pc6Count + pc8Count;
+                    document.getElementById('total-consumer-count').textContent = totalConsumerCount;
+                    
+                    console.log('Consumer Counts:', {
+                        'PC1': pc1Count,
+                        'PC2': pc2Count,
+                        'PC5': pc5Count,
+                        'PC6': pc6Count,
+                        'PC8': pc8Count,
+                        'Total': totalConsumerCount
+                    });
+                    
+                } catch (error) {
+                    console.error('Error loading consumer count data:', error);
+                    showStatus(`ग्राहक संख्या डेटा लोड करताना त्रुटी: ${error.message}`, 'error');
+                }
+            }
+            
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status-message';
+                
+                if (type === 'success') {
+                    statusMessage.classList.add('status-success');
+                } else if (type === 'error') {
+                    statusMessage.classList.add('status-error');
+                } else if (type === 'loading') {
+                    statusMessage.classList.add('status-loading');
+                }
+            }
+            
+            function isValidDate(day, month, year) {
+                // Basic date validation
+                if (month < 1 || month > 12) return false;
+                if (day < 1 || day > 31) return false;
+                
+                // Check for months with 30 days
+                if ([4, 6, 9, 11].includes(month) && day > 30) return false;
+                
+                // Check for February
+                if (month === 2) {
+                    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+                    if (isLeapYear && day > 29) return false;
+                    if (!isLeapYear && day > 28) return false;
+                }
+                
+                return true;
+            }
+            
+            function processExcelData(workbook, dateValue) {
+                // Get the first worksheet
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convert worksheet to JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                // Initialize counters for different status types
+                let pc1Count = 0, pc2Count = 0, pc5Count = 0, pc6Count = 0, pc8Count = 0;
+                
+                // Initialize counters for status types (0, 1, 2, 3, 4, 5 in column K)
+                let pc1Normal = 0, pc2Normal = 0, pc5Normal = 0, pc6Normal = 0, pc8Normal = 0;
+                let pc1Faulty = 0, pc2Faulty = 0, pc5Faulty = 0, pc6Faulty = 0, pc8Faulty = 0;
+                let pc1Lock = 0, pc2Lock = 0, pc5Lock = 0, pc6Lock = 0, pc8Lock = 0;
+                let pc1Overflow = 0, pc2Overflow = 0, pc5Overflow = 0, pc6Overflow = 0, pc8Overflow = 0;
+                let pc1MeterChange = 0, pc2MeterChange = 0, pc5MeterChange = 0, pc6MeterChange = 0, pc8MeterChange = 0;
+                let pc1Inacs = 0, pc2Inacs = 0, pc5Inacs = 0, pc6Inacs = 0, pc8Inacs = 0;
+                
+                // Initialize counters for detailed analysis
+                let pc1FaultyCurrent = 0, pc2FaultyCurrent = 0, pc5FaultyCurrent = 0, pc6FaultyCurrent = 0, pc8FaultyCurrent = 0;
+                let pc1FaultyRepeated = 0, pc2FaultyRepeated = 0, pc5FaultyRepeated = 0, pc6FaultyRepeated = 0, pc8FaultyRepeated = 0;
+                let pc1Faulty1To30 = 0, pc2Faulty1To30 = 0, pc5Faulty1To30 = 0, pc6Faulty1To30 = 0, pc8Faulty1To30 = 0;
+                let pc1FaultyBelow5 = 0, pc2FaultyBelow5 = 0, pc5FaultyBelow5 = 0, pc6FaultyBelow5 = 0, pc8FaultyBelow5 = 0;
+                
+                let pc1LockCurrent = 0, pc2LockCurrent = 0, pc5LockCurrent = 0, pc6LockCurrent = 0, pc8LockCurrent = 0;
+                let pc1LockRepeated = 0, pc2LockRepeated = 0, pc5LockRepeated = 0, pc6LockRepeated = 0, pc8LockRepeated = 0;
+                let pc1LockBelow5 = 0, pc2LockBelow5 = 0, pc5LockBelow5 = 0, pc6LockBelow5 = 0, pc8LockBelow5 = 0;
+                
+                let pc1InacsCurrent = 0, pc2InacsCurrent = 0, pc5InacsCurrent = 0, pc6InacsCurrent = 0, pc8InacsCurrent = 0;
+                let pc1InacsRepeated = 0, pc2InacsRepeated = 0, pc5InacsRepeated = 0, pc6InacsRepeated = 0, pc8InacsRepeated = 0;
+                let pc1InacsBelow5 = 0, pc2InacsBelow5 = 0, pc5InacsBelow5 = 0, pc6InacsBelow5 = 0, pc8InacsBelow5 = 0;
+                
+                // Initialize counters for new validation reports
+                let pc1Sm01 = 0, pc2Sm01 = 0, pc5Sm01 = 0, pc6Sm01 = 0, pc8Sm01 = 0;
+                let pc1Mobile = 0, pc2Mobile = 0, pc5Mobile = 0, pc6Mobile = 0, pc8Mobile = 0;
+                let pc1Solar = 0, pc2Solar = 0, pc5Solar = 0, pc6Solar = 0, pc8Solar = 0;
+                let pc1Reverse = 0, pc2Reverse = 0, pc5Reverse = 0, pc6Reverse = 0, pc8Reverse = 0;
+                let pc1NrmlZero = 0, pc2NrmlZero = 0, pc5NrmlZero = 0, pc6NrmlZero = 0, pc8NrmlZero = 0;
+                let pc1Nrml1To5 = 0, pc2Nrml1To5 = 0, pc5Nrml1To5 = 0, pc6Nrml1To5 = 0, pc8Nrml1To5 = 0;
+                let pc1Nrml1To30 = 0, pc2Nrml1To30 = 0, pc5Nrml1To30 = 0, pc6Nrml1To30 = 0, pc8Nrml1To30 = 0;
+                let pc1Mf = 0, pc2Mf = 0, pc5Mf = 0, pc6Mf = 0, pc8Mf = 0;
+                let pc1NoMobile = 0, pc2NoMobile = 0, pc5NoMobile = 0, pc6NoMobile = 0, pc8NoMobile = 0;
+                let pc1FaultyNormal = 0, pc2FaultyNormal = 0, pc5FaultyNormal = 0, pc6FaultyNormal = 0, pc8FaultyNormal = 0;
+                let pc1TdProgressive = 0, pc2TdProgressive = 0, pc5TdProgressive = 0, pc6TdProgressive = 0, pc8TdProgressive = 0;
+                let pc1TdNoPd = 0, pc2TdNoPd = 0, pc5TdNoPd = 0, pc6TdNoPd = 0, pc8TdNoPd = 0;
+                let pc1NewConsumer = 0, pc2NewConsumer = 0, pc5NewConsumer = 0, pc6NewConsumer = 0, pc8NewConsumer = 0;
+                
+                // For Top 25 calculation
+                const pc1Top25 = [], pc2Top25 = [], pc5Top25 = [], pc6Top25 = [], pc8Top25 = [];
+                
+                // Start from row 1 (skip header if exists)
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row && row.length > 17) {
+                        const pcValue = row[0]; // Column A
+                        const cValue = row[2]; // Column C
+                        const iValue = row[8]; // Column I
+                        const kValue = row[10]; // Column K
+                        const nValue = row[13]; // Column N
+                        const oValue = row[14]; // Column O (average)
+                        const pValue = row[15]; // Column P
+                        const qValue = row[16]; // Column Q
+                        const rValue = row[17]; // Column R
+                        const sValue = row[18]; // Column S
+                        const tValue = row[19]; // Column T
+                        const uValue = row[20]; // Column U
+                        
+                        // Count all readings (Up-to-date readings received)
+                        if (pcValue === 1 || pcValue === '1') {
+                            pc1Count++;
+                        } else if (pcValue === 2 || pcValue === '2') {
+                            pc2Count++;
+                        } else if (pcValue === 5 || pcValue === '5') {
+                            pc5Count++;
+                        } else if (pcValue === 6 || pcValue === '6') {
+                            pc6Count++;
+                        } else if (pcValue === 8 || pcValue === '8') {
+                            pc8Count++;
+                        }
+                        
+                        // Check status values in column K
+                        const isNormal = kValue === 0 || kValue === '0';
+                        const isFaulty = kValue === 1 || kValue === '1';
+                        const isLock = kValue === 2 || kValue === '2';
+                        const isOverflow = kValue === 3 || kValue === '3';
+                        const isMeterChange = kValue === 4 || kValue === '4';
+                        const isInacs = kValue === 5 || kValue === '5';
+                        
+                        // Check R column values
+                        const rIsZero = rValue === 0 || rValue === '0';
+                        const rIsOne = rValue === 1 || rValue === '1';
+                        const rIsTwo = rValue === 2 || rValue === '2';
+                        const rIsFive = rValue === 5 || rValue === '5';
+                        
+                        // Check O column values (average)
+                        const oValueNum = parseFloat(oValue) || 0;
+                        const is1To30 = oValueNum >= 1 && oValueNum <= 30;
+                        const isBelow5 = oValueNum >= 0 && oValueNum <= 5;
+                        
+                        // Check N column values (consumption)
+                        const nValueNum = parseFloat(nValue) || 0;
+                        const isNegative = nValueNum < 0;
+                        const isZero = nValueNum === 0;
+                        const is1To5 = nValueNum >= 1 && nValueNum <= 5;
+                        const is1To30N = nValueNum >= 1 && nValueNum <= 30;
+                        const isGreaterThanZero = nValueNum > 0;
+                        
+                        // Check P column values (MF)
+                        const pValueNum = parseFloat(pValue) || 0;
+                        const isMfGreaterThan1 = pValueNum > 1;
+                        
+                        // Check Q column values (Mobile) - BLANK check
+                        const isNoMobile = qValue === null || qValue === undefined || String(qValue).trim() === '';
+                        
+                        // Check T column values (New Consumer) - BLANK check
+                        const isNewConsumer = (tValue == null) || (typeof tValue === 'string' && tValue.replace(/\u00A0/g,' ').replace(/\u200B/g,'').trim() === '');
+                        
+                        // Check U column values (TD) - DATE check
+                        const isTd = uValue && !isNaN(new Date(uValue).getTime());
+                        
+                        if (pcValue === 1 || pcValue === '1') {
+                            if (isNormal) pc1Normal++;
+                            if (isFaulty) pc1Faulty++;
+                            if (isLock) pc1Lock++;
+                            if (isOverflow) pc1Overflow++;
+                            if (isMeterChange) pc1MeterChange++;
+                            if (isInacs) pc1Inacs++;
+                            
+                            // FAULTY detailed analysis
+                            if (isFaulty && rIsZero) pc1FaultyCurrent++;
+                            if (isFaulty && rIsOne) pc1FaultyRepeated++;
+                            if (isFaulty && is1To30) pc1Faulty1To30++;
+                            if (isFaulty && isBelow5) pc1FaultyBelow5++;
+                            
+                            // LOCK detailed analysis
+                            if (isLock && rIsZero) pc1LockCurrent++;
+                            if (isLock && rIsTwo) pc1LockRepeated++;
+                            if (isLock && isBelow5) pc1LockBelow5++;
+                            
+                            // INACS detailed analysis
+                            if (isInacs && rIsZero) pc1InacsCurrent++;
+                            if (isInacs && rIsFive) pc1InacsRepeated++;
+                            if (isInacs && isBelow5) pc1InacsBelow5++;
+                            
+                            // New validation reports
+                            if (cValue === 'SM01') pc1Sm01++;
+                            if (iValue && iValue.toString().startsWith('M') && cValue !== 'SM01') pc1Mobile++;
+                            if (sValue === 'Y') pc1Solar++;
+                            if (isNegative) pc1Reverse++;
+                            if (isNormal && isZero) pc1NrmlZero++;
+                            if (isNormal && is1To5) pc1Nrml1To5++;
+                            if (isNormal && is1To30N) pc1Nrml1To30++;
+                            if (isMfGreaterThan1) pc1Mf++;
+                            if (isNoMobile) pc1NoMobile++;
+                            if (isNormal && rIsOne) pc1FaultyNormal++;
+                            if (isTd && isGreaterThanZero) pc1TdProgressive++;
+                            if (isTd && isZero) pc1TdNoPd++;
+                            if (isNewConsumer) pc1NewConsumer++;
+                            
+                            // For Top 25 calculation
+                            if (nValueNum > 0) pc1Top25.push(nValueNum);
+                            
+                        } else if (pcValue === 2 || pcValue === '2') {
+                            if (isNormal) pc2Normal++;
+                            if (isFaulty) pc2Faulty++;
+                            if (isLock) pc2Lock++;
+                            if (isOverflow) pc2Overflow++;
+                            if (isMeterChange) pc2MeterChange++;
+                            if (isInacs) pc2Inacs++;
+                            
+                            // FAULTY detailed analysis
+                            if (isFaulty && rIsZero) pc2FaultyCurrent++;
+                            if (isFaulty && rIsOne) pc2FaultyRepeated++;
+                            if (isFaulty && is1To30) pc2Faulty1To30++;
+                            if (isFaulty && isBelow5) pc2FaultyBelow5++;
+                            
+                            // LOCK detailed analysis
+                            if (isLock && rIsZero) pc2LockCurrent++;
+                            if (isLock && rIsTwo) pc2LockRepeated++;
+                            if (isLock && isBelow5) pc2LockBelow5++;
+                            
+                            // INACS detailed analysis
+                            if (isInacs && rIsZero) pc2InacsCurrent++;
+                            if (isInacs && rIsFive) pc2InacsRepeated++;
+                            if (isInacs && isBelow5) pc2InacsBelow5++;
+                            
+                            // New validation reports
+                            if (cValue === 'SM01') pc2Sm01++;
+                            if (iValue && iValue.toString().startsWith('M') && cValue !== 'SM01') pc2Mobile++;
+                            if (sValue === 'Y') pc2Solar++;
+                            if (isNegative) pc2Reverse++;
+                            if (isNormal && isZero) pc2NrmlZero++;
+                            if (isNormal && is1To5) pc2Nrml1To5++;
+                            if (isNormal && is1To30N) pc2Nrml1To30++;
+                            if (isMfGreaterThan1) pc2Mf++;
+                            if (isNoMobile) pc2NoMobile++;
+                            if (isNormal && rIsOne) pc2FaultyNormal++;
+                            if (isTd && isGreaterThanZero) pc2TdProgressive++;
+                            if (isTd && isZero) pc2TdNoPd++;
+                            if (isNewConsumer) pc2NewConsumer++;
+                            
+                            // For Top 25 calculation
+                            if (nValueNum > 0) pc2Top25.push(nValueNum);
+                            
+                        } else if (pcValue === 5 || pcValue === '5') {
+                            if (isNormal) pc5Normal++;
+                            if (isFaulty) pc5Faulty++;
+                            if (isLock) pc5Lock++;
+                            if (isOverflow) pc5Overflow++;
+                            if (isMeterChange) pc5MeterChange++;
+                            if (isInacs) pc5Inacs++;
+                            
+                            // FAULTY detailed analysis
+                            if (isFaulty && rIsZero) pc5FaultyCurrent++;
+                            if (isFaulty && rIsOne) pc5FaultyRepeated++;
+                            if (isFaulty && is1To30) pc5Faulty1To30++;
+                            if (isFaulty && isBelow5) pc5FaultyBelow5++;
+                            
+                            // LOCK detailed analysis
+                            if (isLock && rIsZero) pc5LockCurrent++;
+                            if (isLock && rIsTwo) pc5LockRepeated++;
+                            if (isLock && isBelow5) pc5LockBelow5++;
+                            
+                            // INACS detailed analysis
+                            if (isInacs && rIsZero) pc5InacsCurrent++;
+                            if (isInacs && rIsFive) pc5InacsRepeated++;
+                            if (isInacs && isBelow5) pc5InacsBelow5++;
+                            
+                            // New validation reports
+                            if (cValue === 'SM01') pc5Sm01++;
+                            if (iValue && iValue.toString().startsWith('M') && cValue !== 'SM01') pc5Mobile++;
+                            if (sValue === 'Y') pc5Solar++;
+                            if (isNegative) pc5Reverse++;
+                            if (isNormal && isZero) pc5NrmlZero++;
+                            if (isNormal && is1To5) pc5Nrml1To5++;
+                            if (isNormal && is1To30N) pc5Nrml1To30++;
+                            if (isMfGreaterThan1) pc5Mf++;
+                            if (isNoMobile) pc5NoMobile++;
+                            if (isNormal && rIsOne) pc5FaultyNormal++;
+                            if (isTd && isGreaterThanZero) pc5TdProgressive++;
+                            if (isTd && isZero) pc5TdNoPd++;
+                            if (isNewConsumer) pc5NewConsumer++;
+                            
+                            // For Top 25 calculation
+                            if (nValueNum > 0) pc5Top25.push(nValueNum);
+                            
+                        } else if (pcValue === 6 || pcValue === '6') {
+                            if (isNormal) pc6Normal++;
+                            if (isFaulty) pc6Faulty++;
+                            if (isLock) pc6Lock++;
+                            if (isOverflow) pc6Overflow++;
+                            if (isMeterChange) pc6MeterChange++;
+                            if (isInacs) pc6Inacs++;
+                            
+                            // FAULTY detailed analysis
+                            if (isFaulty && rIsZero) pc6FaultyCurrent++;
+                            if (isFaulty && rIsOne) pc6FaultyRepeated++;
+                            if (isFaulty && is1To30) pc6Faulty1To30++;
+                            if (isFaulty && isBelow5) pc6FaultyBelow5++;
+                            
+                            // LOCK detailed analysis
+                            if (isLock && rIsZero) pc6LockCurrent++;
+                            if (isLock && rIsTwo) pc6LockRepeated++;
+                            if (isLock && isBelow5) pc6LockBelow5++;
+                            
+                            // INACS detailed analysis
+                            if (isInacs && rIsZero) pc6InacsCurrent++;
+                            if (isInacs && rIsFive) pc6InacsRepeated++;
+                            if (isInacs && isBelow5) pc6InacsBelow5++;
+                            
+                            // New validation reports
+                            if (cValue === 'SM01') pc6Sm01++;
+                            if (iValue && iValue.toString().startsWith('M') && cValue !== 'SM01') pc6Mobile++;
+                            if (sValue === 'Y') pc6Solar++;
+                            if (isNegative) pc6Reverse++;
+                            if (isNormal && isZero) pc6NrmlZero++;
+                            if (isNormal && is1To5) pc6Nrml1To5++;
+                            if (isNormal && is1To30N) pc6Nrml1To30++;
+                            if (isMfGreaterThan1) pc6Mf++;
+                            if (isNoMobile) pc6NoMobile++;
+                            if (isNormal && rIsOne) pc6FaultyNormal++;
+                            if (isTd && isGreaterThanZero) pc6TdProgressive++;
+                            if (isTd && isZero) pc6TdNoPd++;
+                            if (isNewConsumer) pc6NewConsumer++;
+                            
+                            // For Top 25 calculation
+                            if (nValueNum > 0) pc6Top25.push(nValueNum);
+                            
+                        } else if (pcValue === 8 || pcValue === '8') {
+                            if (isNormal) pc8Normal++;
+                            if (isFaulty) pc8Faulty++;
+                            if (isLock) pc8Lock++;
+                            if (isOverflow) pc8Overflow++;
+                            if (isMeterChange) pc8MeterChange++;
+                            if (isInacs) pc8Inacs++;
+                            
+                            // FAULTY detailed analysis
+                            if (isFaulty && rIsZero) pc8FaultyCurrent++;
+                            if (isFaulty && rIsOne) pc8FaultyRepeated++;
+                            if (isFaulty && is1To30) pc8Faulty1To30++;
+                            if (isFaulty && isBelow5) pc8FaultyBelow5++;
+                            
+                            // LOCK detailed analysis
+                            if (isLock && rIsZero) pc8LockCurrent++;
+                            if (isLock && rIsTwo) pc8LockRepeated++;
+                            if (isLock && isBelow5) pc8LockBelow5++;
+                            
+                            // INACS detailed analysis
+                            if (isInacs && rIsZero) pc8InacsCurrent++;
+                            if (isInacs && rIsFive) pc8InacsRepeated++;
+                            if (isInacs && isBelow5) pc8InacsBelow5++;
+                            
+                            // New validation reports
+                            if (cValue === 'SM01') pc8Sm01++;
+                            if (iValue && iValue.toString().startsWith('M') && cValue !== 'SM01') pc8Mobile++;
+                            if (sValue === 'Y') pc8Solar++;
+                            if (isNegative) pc8Reverse++;
+                            if (isNormal && isZero) pc8NrmlZero++;
+                            if (isNormal && is1To5) pc8Nrml1To5++;
+                            if (isNormal && is1To30N) pc8Nrml1To30++;
+                            if (isMfGreaterThan1) pc8Mf++;
+                            if (isNoMobile) pc8NoMobile++;
+                            if (isNormal && rIsOne) pc8FaultyNormal++;
+                            if (isTd && isGreaterThanZero) pc8TdProgressive++;
+                            if (isTd && isZero) pc8TdNoPd++;
+                            if (isNewConsumer) pc8NewConsumer++;
+                            
+                            // For Top 25 calculation
+                            if (nValueNum > 0) pc8Top25.push(nValueNum);
+                        }
+                    }
+                }
+                
+                // Calculate Top 25 values
+                const calculateTop25Sum = (arr) => {
+                    if (arr.length === 0) return 0;
+                    const sorted = arr.sort((a, b) => b - a);
+                    const top25 = sorted.slice(0, 25);
+                    return top25.reduce((sum, val) => sum + val, 0);
+                };
+                
+                const pc1Top25Sum = calculateTop25Sum(pc1Top25);
+                const pc2Top25Sum = calculateTop25Sum(pc2Top25);
+                const pc5Top25Sum = calculateTop25Sum(pc5Top25);
+                const pc6Top25Sum = calculateTop25Sum(pc6Top25);
+                const pc8Top25Sum = calculateTop25Sum(pc8Top25);
+                const totalTop25Sum = pc1Top25Sum + pc2Top25Sum + pc5Top25Sum + pc6Top25Sum + pc8Top25Sum;
+                
+                // Update the Reading Received row with PC counts
+                document.getElementById('pc1-count').textContent = pc1Count;
+                document.getElementById('pc2-count').textContent = pc2Count;
+                document.getElementById('pc5-count').textContent = pc5Count;
+                document.getElementById('pc6-count').textContent = pc6Count;
+                document.getElementById('pc8-count').textContent = pc8Count;
+                
+                // Calculate and update total
+                const totalCount = pc1Count + pc2Count + pc5Count + pc6Count + pc8Count;
+                document.getElementById('total-count').textContent = totalCount;
+                
+                // Update NORMAL status counts
+                document.getElementById('pc1-normal').textContent = pc1Normal;
+                document.getElementById('pc2-normal').textContent = pc2Normal;
+                document.getElementById('pc5-normal').textContent = pc5Normal;
+                document.getElementById('pc6-normal').textContent = pc6Normal;
+                document.getElementById('pc8-normal').textContent = pc8Normal;
+                const totalNormal = pc1Normal + pc2Normal + pc5Normal + pc6Normal + pc8Normal;
+                document.getElementById('total-normal').textContent = totalNormal;
+                
+                // Update FAULTY status counts
+                document.getElementById('pc1-faulty').textContent = pc1Faulty;
+                document.getElementById('pc2-faulty').textContent = pc2Faulty;
+                document.getElementById('pc5-faulty').textContent = pc5Faulty;
+                document.getElementById('pc6-faulty').textContent = pc6Faulty;
+                document.getElementById('pc8-faulty').textContent = pc8Faulty;
+                const totalFaulty = pc1Faulty + pc2Faulty + pc5Faulty + pc6Faulty + pc8Faulty;
+                document.getElementById('total-faulty').textContent = totalFaulty;
+                
+                // Update LOCK status counts
+                document.getElementById('pc1-lock').textContent = pc1Lock;
+                document.getElementById('pc2-lock').textContent = pc2Lock;
+                document.getElementById('pc5-lock').textContent = pc5Lock;
+                document.getElementById('pc6-lock').textContent = pc6Lock;
+                document.getElementById('pc8-lock').textContent = pc8Lock;
+                const totalLock = pc1Lock + pc2Lock + pc5Lock + pc6Lock + pc8Lock;
+                document.getElementById('total-lock').textContent = totalLock;
+                
+                // Update OVERFLOW status counts
+                document.getElementById('pc1-overflow').textContent = pc1Overflow;
+                document.getElementById('pc2-overflow').textContent = pc2Overflow;
+                document.getElementById('pc5-overflow').textContent = pc5Overflow;
+                document.getElementById('pc6-overflow').textContent = pc6Overflow;
+                document.getElementById('pc8-overflow').textContent = pc8Overflow;
+                const totalOverflow = pc1Overflow + pc2Overflow + pc5Overflow + pc6Overflow + pc8Overflow;
+                document.getElementById('total-overflow').textContent = totalOverflow;
+                
+                // Update Meter Change status counts
+                document.getElementById('pc1-meter-change').textContent = pc1MeterChange;
+                document.getElementById('pc2-meter-change').textContent = pc2MeterChange;
+                document.getElementById('pc5-meter-change').textContent = pc5MeterChange;
+                document.getElementById('pc6-meter-change').textContent = pc6MeterChange;
+                document.getElementById('pc8-meter-change').textContent = pc8MeterChange;
+                const totalMeterChange = pc1MeterChange + pc2MeterChange + pc5MeterChange + pc6MeterChange + pc8MeterChange;
+                document.getElementById('total-meter-change').textContent = totalMeterChange;
+                
+                // Update INACS status counts
+                document.getElementById('pc1-inacs').textContent = pc1Inacs;
+                document.getElementById('pc2-inacs').textContent = pc2Inacs;
+                document.getElementById('pc5-inacs').textContent = pc5Inacs;
+                document.getElementById('pc6-inacs').textContent = pc6Inacs;
+                document.getElementById('pc8-inacs').textContent = pc8Inacs;
+                const totalInacs = pc1Inacs + pc2Inacs + pc5Inacs + pc6Inacs + pc8Inacs;
+                document.getElementById('total-inacs').textContent = totalInacs;
+                
+                // Update FAULTY detailed analysis
+                document.getElementById('pc1-faulty-current').textContent = pc1FaultyCurrent;
+                document.getElementById('pc2-faulty-current').textContent = pc2FaultyCurrent;
+                document.getElementById('pc5-faulty-current').textContent = pc5FaultyCurrent;
+                document.getElementById('pc6-faulty-current').textContent = pc6FaultyCurrent;
+                document.getElementById('pc8-faulty-current').textContent = pc8FaultyCurrent;
+                const totalFaultyCurrent = pc1FaultyCurrent + pc2FaultyCurrent + pc5FaultyCurrent + pc6FaultyCurrent + pc8FaultyCurrent;
+                document.getElementById('total-faulty-current').textContent = totalFaultyCurrent;
+                
+                document.getElementById('pc1-faulty-repeated').textContent = pc1FaultyRepeated;
+                document.getElementById('pc2-faulty-repeated').textContent = pc2FaultyRepeated;
+                document.getElementById('pc5-faulty-repeated').textContent = pc5FaultyRepeated;
+                document.getElementById('pc6-faulty-repeated').textContent = pc6FaultyRepeated;
+                document.getElementById('pc8-faulty-repeated').textContent = pc8FaultyRepeated;
+                const totalFaultyRepeated = pc1FaultyRepeated + pc2FaultyRepeated + pc5FaultyRepeated + pc6FaultyRepeated + pc8FaultyRepeated;
+                document.getElementById('total-faulty-repeated').textContent = totalFaultyRepeated;
+                
+                document.getElementById('pc1-faulty-1-30').textContent = pc1Faulty1To30;
+                document.getElementById('pc2-faulty-1-30').textContent = pc2Faulty1To30;
+                document.getElementById('pc5-faulty-1-30').textContent = pc5Faulty1To30;
+                document.getElementById('pc6-faulty-1-30').textContent = pc6Faulty1To30;
+                document.getElementById('pc8-faulty-1-30').textContent = pc8Faulty1To30;
+                const totalFaulty1To30 = pc1Faulty1To30 + pc2Faulty1To30 + pc5Faulty1To30 + pc6Faulty1To30 + pc8Faulty1To30;
+                document.getElementById('total-faulty-1-30').textContent = totalFaulty1To30;
+                
+                document.getElementById('pc1-faulty-below5').textContent = pc1FaultyBelow5;
+                document.getElementById('pc2-faulty-below5').textContent = pc2FaultyBelow5;
+                document.getElementById('pc5-faulty-below5').textContent = pc5FaultyBelow5;
+                document.getElementById('pc6-faulty-below5').textContent = pc6FaultyBelow5;
+                document.getElementById('pc8-faulty-below5').textContent = pc8FaultyBelow5;
+                const totalFaultyBelow5 = pc1FaultyBelow5 + pc2FaultyBelow5 + pc5FaultyBelow5 + pc6FaultyBelow5 + pc8FaultyBelow5;
+                document.getElementById('total-faulty-below5').textContent = totalFaultyBelow5;
+                
+                // Update LOCK detailed analysis
+                document.getElementById('pc1-lock-current').textContent = pc1LockCurrent;
+                document.getElementById('pc2-lock-current').textContent = pc2LockCurrent;
+                document.getElementById('pc5-lock-current').textContent = pc5LockCurrent;
+                document.getElementById('pc6-lock-current').textContent = pc6LockCurrent;
+                document.getElementById('pc8-lock-current').textContent = pc8LockCurrent;
+                const totalLockCurrent = pc1LockCurrent + pc2LockCurrent + pc5LockCurrent + pc6LockCurrent + pc8LockCurrent;
+                document.getElementById('total-lock-current').textContent = totalLockCurrent;
+                
+                document.getElementById('pc1-lock-repeated').textContent = pc1LockRepeated;
+                document.getElementById('pc2-lock-repeated').textContent = pc2LockRepeated;
+                document.getElementById('pc5-lock-repeated').textContent = pc5LockRepeated;
+                document.getElementById('pc6-lock-repeated').textContent = pc6LockRepeated;
+                document.getElementById('pc8-lock-repeated').textContent = pc8LockRepeated;
+                const totalLockRepeated = pc1LockRepeated + pc2LockRepeated + pc5LockRepeated + pc6LockRepeated + pc8LockRepeated;
+                document.getElementById('total-lock-repeated').textContent = totalLockRepeated;
+                
+                document.getElementById('pc1-lock-below5').textContent = pc1LockBelow5;
+                document.getElementById('pc2-lock-below5').textContent = pc2LockBelow5;
+                document.getElementById('pc5-lock-below5').textContent = pc5LockBelow5;
+                document.getElementById('pc6-lock-below5').textContent = pc6LockBelow5;
+                document.getElementById('pc8-lock-below5').textContent = pc8LockBelow5;
+                const totalLockBelow5 = pc1LockBelow5 + pc2LockBelow5 + pc5LockBelow5 + pc6LockBelow5 + pc8LockBelow5;
+                document.getElementById('total-lock-below5').textContent = totalLockBelow5;
+                
+                // Update INACS detailed analysis
+                document.getElementById('pc1-inacs-current').textContent = pc1InacsCurrent;
+                document.getElementById('pc2-inacs-current').textContent = pc2InacsCurrent;
+                document.getElementById('pc5-inacs-current').textContent = pc5InacsCurrent;
+                document.getElementById('pc6-inacs-current').textContent = pc6InacsCurrent;
+                document.getElementById('pc8-inacs-current').textContent = pc8InacsCurrent;
+                const totalInacsCurrent = pc1InacsCurrent + pc2InacsCurrent + pc5InacsCurrent + pc6InacsCurrent + pc8InacsCurrent;
+                document.getElementById('total-inacs-current').textContent = totalInacsCurrent;
+                
+                document.getElementById('pc1-inacs-repeated').textContent = pc1InacsRepeated;
+                document.getElementById('pc2-inacs-repeated').textContent = pc2InacsRepeated;
+                document.getElementById('pc5-inacs-repeated').textContent = pc5InacsRepeated;
+                document.getElementById('pc6-inacs-repeated').textContent = pc6InacsRepeated;
+                document.getElementById('pc8-inacs-repeated').textContent = pc8InacsRepeated;
+                const totalInacsRepeated = pc1InacsRepeated + pc2InacsRepeated + pc5InacsRepeated + pc6InacsRepeated + pc8InacsRepeated;
+                document.getElementById('total-inacs-repeated').textContent = totalInacsRepeated;
+                
+                document.getElementById('pc1-inacs-below5').textContent = pc1InacsBelow5;
+                document.getElementById('pc2-inacs-below5').textContent = pc2InacsBelow5;
+                document.getElementById('pc5-inacs-below5').textContent = pc5InacsBelow5;
+                document.getElementById('pc6-inacs-below5').textContent = pc6InacsBelow5;
+                document.getElementById('pc8-inacs-below5').textContent = pc8InacsBelow5;
+                const totalInacsBelow5 = pc1InacsBelow5 + pc2InacsBelow5 + pc5InacsBelow5 + pc6InacsBelow5 + pc8InacsBelow5;
+                document.getElementById('total-inacs-below5').textContent = totalInacsBelow5;
+                
+                // Update new validation reports
+                document.getElementById('pc1-sm01').textContent = pc1Sm01;
+                document.getElementById('pc2-sm01').textContent = pc2Sm01;
+                document.getElementById('pc5-sm01').textContent = pc5Sm01;
+                document.getElementById('pc6-sm01').textContent = pc6Sm01;
+                document.getElementById('pc8-sm01').textContent = pc8Sm01;
+                const totalSm01 = pc1Sm01 + pc2Sm01 + pc5Sm01 + pc6Sm01 + pc8Sm01;
+                document.getElementById('total-sm01').textContent = totalSm01;
+                
+                document.getElementById('pc1-mobile').textContent = pc1Mobile;
+                document.getElementById('pc2-mobile').textContent = pc2Mobile;
+                document.getElementById('pc5-mobile').textContent = pc5Mobile;
+                document.getElementById('pc6-mobile').textContent = pc6Mobile;
+                document.getElementById('pc8-mobile').textContent = pc8Mobile;
+                const totalMobile = pc1Mobile + pc2Mobile + pc5Mobile + pc6Mobile + pc8Mobile;
+                document.getElementById('total-mobile').textContent = totalMobile;
+                
+                document.getElementById('pc1-solar').textContent = pc1Solar;
+                document.getElementById('pc2-solar').textContent = pc2Solar;
+                document.getElementById('pc5-solar').textContent = pc5Solar;
+                document.getElementById('pc6-solar').textContent = pc6Solar;
+                document.getElementById('pc8-solar').textContent = pc8Solar;
+                const totalSolar = pc1Solar + pc2Solar + pc5Solar + pc6Solar + pc8Solar;
+                document.getElementById('total-solar').textContent = totalSolar;
+                
+                document.getElementById('pc1-reverse').textContent = pc1Reverse;
+                document.getElementById('pc2-reverse').textContent = pc2Reverse;
+                document.getElementById('pc5-reverse').textContent = pc5Reverse;
+                document.getElementById('pc6-reverse').textContent = pc6Reverse;
+                document.getElementById('pc8-reverse').textContent = pc8Reverse;
+                const totalReverse = pc1Reverse + pc2Reverse + pc5Reverse + pc6Reverse + pc8Reverse;
+                document.getElementById('total-reverse').textContent = totalReverse;
+                
+                document.getElementById('pc1-nrml-zero').textContent = pc1NrmlZero;
+                document.getElementById('pc2-nrml-zero').textContent = pc2NrmlZero;
+                document.getElementById('pc5-nrml-zero').textContent = pc5NrmlZero;
+                document.getElementById('pc6-nrml-zero').textContent = pc6NrmlZero;
+                document.getElementById('pc8-nrml-zero').textContent = pc8NrmlZero;
+                const totalNrmlZero = pc1NrmlZero + pc2NrmlZero + pc5NrmlZero + pc6NrmlZero + pc8NrmlZero;
+                document.getElementById('total-nrml-zero').textContent = totalNrmlZero;
+                
+                document.getElementById('pc1-nrml-1-5').textContent = pc1Nrml1To5;
+                document.getElementById('pc2-nrml-1-5').textContent = pc2Nrml1To5;
+                document.getElementById('pc5-nrml-1-5').textContent = pc5Nrml1To5;
+                document.getElementById('pc6-nrml-1-5').textContent = pc6Nrml1To5;
+                document.getElementById('pc8-nrml-1-5').textContent = pc8Nrml1To5;
+                const totalNrml1To5 = pc1Nrml1To5 + pc2Nrml1To5 + pc5Nrml1To5 + pc6Nrml1To5 + pc8Nrml1To5;
+                document.getElementById('total-nrml-1-5').textContent = totalNrml1To5;
+                
+                document.getElementById('pc1-nrml-1-30').textContent = pc1Nrml1To30;
+                document.getElementById('pc2-nrml-1-30').textContent = pc2Nrml1To30;
+                document.getElementById('pc5-nrml-1-30').textContent = pc5Nrml1To30;
+                document.getElementById('pc6-nrml-1-30').textContent = pc6Nrml1To30;
+                document.getElementById('pc8-nrml-1-30').textContent = pc8Nrml1To30;
+                const totalNrml1To30 = pc1Nrml1To30 + pc2Nrml1To30 + pc5Nrml1To30 + pc6Nrml1To30 + pc8Nrml1To30;
+                document.getElementById('total-nrml-1-30').textContent = totalNrml1To30;
+                
+                document.getElementById('pc1-top25').textContent = pc1Top25Sum.toFixed(2);
+                document.getElementById('pc2-top25').textContent = pc2Top25Sum.toFixed(2);
+                document.getElementById('pc5-top25').textContent = pc5Top25Sum.toFixed(2);
+                document.getElementById('pc6-top25').textContent = pc6Top25Sum.toFixed(2);
+                document.getElementById('pc8-top25').textContent = pc8Top25Sum.toFixed(2);
+                document.getElementById('total-top25').textContent = totalTop25Sum.toFixed(2);
+                
+                document.getElementById('pc1-mf').textContent = pc1Mf;
+                document.getElementById('pc2-mf').textContent = pc2Mf;
+                document.getElementById('pc5-mf').textContent = pc5Mf;
+                document.getElementById('pc6-mf').textContent = pc6Mf;
+                document.getElementById('pc8-mf').textContent = pc8Mf;
+                const totalMf = pc1Mf + pc2Mf + pc5Mf + pc6Mf + pc8Mf;
+                document.getElementById('total-mf').textContent = totalMf;
+                
+                document.getElementById('pc1-nomobile').textContent = pc1NoMobile;
+                document.getElementById('pc2-nomobile').textContent = pc2NoMobile;
+                document.getElementById('pc5-nomobile').textContent = pc5NoMobile;
+                document.getElementById('pc6-nomobile').textContent = pc6NoMobile;
+                document.getElementById('pc8-nomobile').textContent = pc8NoMobile;
+                const totalNoMobile = pc1NoMobile + pc2NoMobile + pc5NoMobile + pc6NoMobile + pc8NoMobile;
+                document.getElementById('total-nomobile').textContent = totalNoMobile;
+                
+                document.getElementById('pc1-faulty-normal').textContent = pc1FaultyNormal;
+                document.getElementById('pc2-faulty-normal').textContent = pc2FaultyNormal;
+                document.getElementById('pc5-faulty-normal').textContent = pc5FaultyNormal;
+                document.getElementById('pc6-faulty-normal').textContent = pc6FaultyNormal;
+                document.getElementById('pc8-faulty-normal').textContent = pc8FaultyNormal;
+                const totalFaultyNormal = pc1FaultyNormal + pc2FaultyNormal + pc5FaultyNormal + pc6FaultyNormal + pc8FaultyNormal;
+                document.getElementById('total-faulty-normal').textContent = totalFaultyNormal;
+                
+                document.getElementById('pc1-td-progressive').textContent = pc1TdProgressive;
+                document.getElementById('pc2-td-progressive').textContent = pc2TdProgressive;
+                document.getElementById('pc5-td-progressive').textContent = pc5TdProgressive;
+                document.getElementById('pc6-td-progressive').textContent = pc6TdProgressive;
+                document.getElementById('pc8-td-progressive').textContent = pc8TdProgressive;
+                const totalTdProgressive = pc1TdProgressive + pc2TdProgressive + pc5TdProgressive + pc6TdProgressive + pc8TdProgressive;
+                document.getElementById('total-td-progressive').textContent = totalTdProgressive;
+                
+                document.getElementById('pc1-td-nopd').textContent = pc1TdNoPd;
+                document.getElementById('pc2-td-nopd').textContent = pc2TdNoPd;
+                document.getElementById('pc5-td-nopd').textContent = pc5TdNoPd;
+                document.getElementById('pc6-td-nopd').textContent = pc6TdNoPd;
+                document.getElementById('pc8-td-nopd').textContent = pc8TdNoPd;
+                const totalTdNoPd = pc1TdNoPd + pc2TdNoPd + pc5TdNoPd + pc6TdNoPd + pc8TdNoPd;
+                document.getElementById('total-td-nopd').textContent = totalTdNoPd;
+                
+                document.getElementById('pc1-new-consumer').textContent = pc1NewConsumer;
+                document.getElementById('pc2-new-consumer').textContent = pc2NewConsumer;
+                document.getElementById('pc5-new-consumer').textContent = pc5NewConsumer;
+                document.getElementById('pc6-new-consumer').textContent = pc6NewConsumer;
+                document.getElementById('pc8-new-consumer').textContent = pc8NewConsumer;
+                const totalNewConsumer = pc1NewConsumer + pc2NewConsumer + pc5NewConsumer + pc6NewConsumer + pc8NewConsumer;
+                document.getElementById('total-new-consumer').textContent = totalNewConsumer;
+                
+                // Calculate Billing Efficiency percentages - NEW LOGIC
+                // Billing Efficiency = (NORMAL Meter Status / Up-to-date readings received) * 100
+                const pc1Efficiency = pc1Count > 0 ? ((pc1Normal / pc1Count) * 100).toFixed(2) : "0.00";
+                const pc2Efficiency = pc2Count > 0 ? ((pc2Normal / pc2Count) * 100).toFixed(2) : "0.00";
+                const pc5Efficiency = pc5Count > 0 ? ((pc5Normal / pc5Count) * 100).toFixed(2) : "0.00";
+                const pc6Efficiency = pc6Count > 0 ? ((pc6Normal / pc6Count) * 100).toFixed(2) : "0.00";
+                const pc8Efficiency = pc8Count > 0 ? ((pc8Normal / pc8Count) * 100).toFixed(2) : "0.00";
+                const totalEfficiency = totalCount > 0 ? ((totalNormal / totalCount) * 100).toFixed(2) : "0.00";
+                
+                // Update Billing Efficiency row
+                document.getElementById('pc1-efficiency').textContent = pc1Efficiency;
+                document.getElementById('pc2-efficiency').textContent = pc2Efficiency;
+                document.getElementById('pc5-efficiency').textContent = pc5Efficiency;
+                document.getElementById('pc6-efficiency').textContent = pc6Efficiency;
+                document.getElementById('pc8-efficiency').textContent = pc8Efficiency;
+                document.getElementById('total-efficiency').textContent = totalEfficiency;
+                
+                console.log('Billing Efficiency Calculation:', {
+                    'PC1': { Normal: pc1Normal, Total: pc1Count, Efficiency: pc1Efficiency },
+                    'PC2': { Normal: pc2Normal, Total: pc2Count, Efficiency: pc2Efficiency },
+                    'PC5': { Normal: pc5Normal, Total: pc5Count, Efficiency: pc5Efficiency },
+                    'PC6': { Normal: pc6Normal, Total: pc6Count, Efficiency: pc6Efficiency },
+                    'PC8': { Normal: pc8Normal, Total: pc8Count, Efficiency: pc8Efficiency },
+                    'Total': { Normal: totalNormal, Total: totalCount, Efficiency: totalEfficiency }
+                });
+            }
+        }
+
+        // PDF Report Generation Function
+        function generatePDFReport() {
+            if (!currentWorkbookData) {
+                alert('कृपया प्रथम डेटा लोड करा.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            
+            // Add title
+            doc.setFontSize(16);
+            doc.text('Systematic Monitoring Of Daily Meter Reading Activities', 20, 20);
+            
+            // Add date
+            doc.setFontSize(12);
+            doc.text(`Date: ${currentDateValue}`, 20, 30);
+            
+            // Add table data
+            let yPosition = 50;
+            const tableRows = document.querySelectorAll('tbody tr');
+            
+            doc.setFontSize(10);
+            
+            // Add table headers
+            doc.text('Report', 20, yPosition);
+            doc.text('PC1', 100, yPosition);
+            doc.text('PC2', 120, yPosition);
+            doc.text('PC5', 140, yPosition);
+            doc.text('PC6', 160, yPosition);
+            doc.text('PC8', 180, yPosition);
+            doc.text('Total', 200, yPosition);
+            
+            yPosition += 10;
+            
+            // Add table rows
+            tableRows.forEach(row => {
+                const reportCell = row.querySelector('.reports-column');
+                const pc1Cell = row.cells[2];
+                const pc2Cell = row.cells[3];
+                const pc5Cell = row.cells[4];
+                const pc6Cell = row.cells[5];
+                const pc8Cell = row.cells[6];
+                const totalCell = row.cells[7];
+                
+                if (reportCell && pc1Cell && pc2Cell && pc5Cell && pc6Cell && pc8Cell && totalCell) {
+                    const reportText = reportCell.textContent;
+                    const pc1Text = pc1Cell.textContent;
+                    const pc2Text = pc2Cell.textContent;
+                    const pc5Text = pc5Cell.textContent;
+                    const pc6Text = pc6Cell.textContent;
+                    const pc8Text = pc8Cell.textContent;
+                    const totalText = totalCell.textContent;
+                    
+                    // Check if we need a new page
+                    if (yPosition > 270) {
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                    
+                    // Add row data
+                    doc.text(reportText.substring(0, 50), 20, yPosition);
+                    doc.text(pc1Text, 100, yPosition);
+                    doc.text(pc2Text, 120, yPosition);
+                    doc.text(pc5Text, 140, yPosition);
+                    doc.text(pc6Text, 160, yPosition);
+                    doc.text(pc8Text, 180, yPosition);
+                    doc.text(totalText, 200, yPosition);
+                    
+                    yPosition += 7;
+                }
+            });
+            
+            // Save the PDF
+            doc.save(`M30_Report_${currentDateValue}.pdf`);
+        }
+
+        // Excel Report Generation Function
+        function generateExcelReport(reportType, reportName) {
+            if (!currentWorkbookData) {
+                alert('कृपया प्रथम डेटा लोड करा.');
+                return;
+            }
+
+            // Get the first worksheet
+            const firstSheetName = currentWorkbookData.SheetNames[0];
+            const worksheet = currentWorkbookData.Sheets[firstSheetName];
+            
+            // Convert worksheet to JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            // Filter data based on report type and name
+            let filteredData = [];
+            
+            // Add header row
+            if (jsonData.length > 0) {
+                filteredData.push(jsonData[0]);
+            }
+            
+            // Filter rows based on report type
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (row && row.length > 17) {
+                    const pcValue = row[0]; // Column A
+                    const cValue = row[2]; // Column C
+                    const iValue = row[8]; // Column I
+                    const kValue = row[10]; // Column K
+                    const nValue = row[13]; // Column N
+                    const oValue = row[14]; // Column O (average)
+                    const pValue = row[15]; // Column P
+                    const qValue = row[16]; // Column Q
+                    const rValue = row[17]; // Column R
+                    const sValue = row[18]; // Column S
+                    const tValue = row[19]; // Column T
+                    const uValue = row[20]; // Column U
+                    
+                    // Check O column values (average)
+                    const oValueNum = parseFloat(oValue) || 0;
+                    const is1To30 = oValueNum >= 1 && oValueNum <= 30;
+                    const isBelow5 = oValueNum >= 0 && oValueNum <= 5;
+                    
+                    // Check N column values (consumption)
+                    const nValueNum = parseFloat(nValue) || 0;
+                    const isNegative = nValueNum < 0;
+                    const isZero = nValueNum === 0;
+                    const is1To5 = nValueNum >= 1 && nValueNum <= 5;
+                    const is1To30N = nValueNum >= 1 && nValueNum <= 30;
+                    const isGreaterThanZero = nValueNum > 0;
+                    
+                    // Check P column values (MF)
+                    const pValueNum = parseFloat(pValue) || 0;
+                    const isMfGreaterThan1 = pValueNum > 1;
+                    
+                    // Check Q column values (Mobile) - BLANK check
+                    const isNoMobile = qValue === null || qValue === undefined || String(qValue).trim() === '';
+                    
+                    // Check T column values (New Consumer) - BLANK check
+                    const isNewConsumer = (tValue == null) || (typeof tValue === 'string' && tValue.replace(/\u00A0/g,' ').replace(/\u200B/g,'').trim() === '');
+                    
+                    // Check U column values (TD) - DATE check
+                    const isTd = uValue && !isNaN(new Date(uValue).getTime());
+                    
+                    // Check R column values
+                    const rIsZero = rValue === 0 || rValue === '0';
+                    const rIsOne = rValue === 1 || rValue === '1';
+                    const rIsTwo = rValue === 2 || rValue === '2';
+                    const rIsFive = rValue === 5 || rValue === '5';
+                    
+                    // Check status values in column K
+                    const isNormal = kValue === 0 || kValue === '0';
+                    const isFaulty = kValue === 1 || kValue === '1';
+                    const isLock = kValue === 2 || kValue === '2';
+                    const isOverflow = kValue === 3 || kValue === '3';
+                    const isMeterChange = kValue === 4 || kValue === '4';
+                    const isInacs = kValue === 5 || kValue === '5';
+                    
+                    let includeRow = false;
+                    
+                    // Apply filters based on report type and name
+                    switch(reportType) {
+                        case 'basic':
+                            switch(reportName) {
+                                case 'Up-to-date readings received':
+                                    includeRow = true; // All rows
+                                    break;
+                                case 'Consumers with NORMAL Meter Status':
+                                    includeRow = isNormal;
+                                    break;
+                                case 'Consumers with FAULTY Meter Status':
+                                    includeRow = isFaulty;
+                                    break;
+                                case 'Consumers with LOCK Meter Status':
+                                    includeRow = isLock;
+                                    break;
+                                case 'Consumers with OVERFLOW Meter Status':
+                                    includeRow = isOverflow;
+                                    break;
+                                case 'Consumers with Meter Change Status':
+                                    includeRow = isMeterChange;
+                                    break;
+                                case 'Consumers with INACS Meter Status':
+                                    includeRow = isInacs;
+                                    break;
+                            }
+                            break;
+                        case 'faulty':
+                            switch(reportName) {
+                                case 'FAULTY meter status in current month':
+                                    includeRow = isFaulty && rIsZero;
+                                    break;
+                                case 'Repeatedly FAULTY meter status':
+                                    includeRow = isFaulty && rIsOne;
+                                    break;
+                                case 'FAULTY average 1 to 30 unit':
+                                    includeRow = isFaulty && is1To30;
+                                    break;
+                                case 'FAULTY average below 5 unit':
+                                    includeRow = isFaulty && isBelow5;
+                                    break;
+                            }
+                            break;
+                        case 'lock':
+                            switch(reportName) {
+                                case 'LOCK meter status in current month':
+                                    includeRow = isLock && rIsZero;
+                                    break;
+                                case 'Repeatedly LOCK meter status':
+                                    includeRow = isLock && rIsTwo;
+                                    break;
+                                case 'LOCK average below 5 unit':
+                                    includeRow = isLock && isBelow5;
+                                    break;
+                            }
+                            break;
+                        case 'inaccessible':
+                            switch(reportName) {
+                                case 'INACS meter status in current month':
+                                    includeRow = isInacs && rIsZero;
+                                    break;
+                                case 'Repeatedly INACS meter status':
+                                    includeRow = isInacs && rIsFive;
+                                    break;
+                                case 'INACS average below 5 unit':
+                                    includeRow = isInacs && isBelow5;
+                                    break;
+                            }
+                            break;
+                        case 'validation':
+                            switch(reportName) {
+                                case 'Smart meters with automatic readings':
+                                    includeRow = cValue === 'SM01';
+                                    break;
+                                case 'Smart Meter Readings through Mobile App':
+                                    includeRow = iValue && iValue.toString().startsWith('M') && cValue !== 'SM01';
+                                    break;
+                                case 'Consumers with SOLAR flags':
+                                    includeRow = sValue === 'Y';
+                                    break;
+                                case 'Consumers With Reverce Meter Reading':
+                                    includeRow = isNegative;
+                                    break;
+                                case 'NRML status and zero consumption':
+                                    includeRow = isNormal && isZero;
+                                    break;
+                                case 'NRML status and consumption between 1 to 5 units':
+                                    includeRow = isNormal && is1To5;
+                                    break;
+                                case 'NRML status and consumption between 1 to 30 units':
+                                    includeRow = isNormal && is1To30N;
+                                    break;
+                                case 'Consumers With MF Greater Than 01':
+                                    includeRow = isMfGreaterThan1;
+                                    break;
+                                case 'Consumers Without Mobile Number Registration':
+                                    includeRow = isNoMobile;
+                                    break;
+                                case 'Faulty to Normal Meter Status Converted':
+                                    includeRow = isNormal && rIsOne;
+                                    break;
+                                case 'TD Meters with Progressive Reading':
+                                    includeRow = isTd && isGreaterThanZero;
+                                    break;
+                                case 'TD consumers who have not been PD or Reconnect':
+                                    includeRow = isTd && isZero;
+                                    break;
+                                case 'New Consumer ( First Billing )':
+                                    includeRow = isNewConsumer;
+                                    break;
+                            }
+                            break;
+                    }
+                    
+                    if (includeRow) {
+                        filteredData.push(row);
+                    }
+                }
+            }
+            
+            // Create a new workbook with filtered data
+            const newWorkbook = XLSX.utils.book_new();
+            const newWorksheet = XLSX.utils.aoa_to_sheet(filteredData);
+            XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'Filtered Data');
+            
+            // Generate and download the Excel file
+            XLSX.writeFile(newWorkbook, `${reportName.replace(/[^a-zA-Z0-9]/g, '_')}_${currentDateValue}.xlsx`);
+        }
+    </script>
+</body>
+</html>
